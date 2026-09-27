@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Customers\Schemas;
 
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -81,7 +82,33 @@ class CustomerForm
                     ->default('new')
                     ->required(),
 
-                Textarea::make('notes')
+                FileUpload::make('cv_path')
+                ->label('السيرة الذاتية')
+                ->disk('local')
+                ->directory('customers/cvs')
+                ->acceptedFileTypes([
+                    'application/pdf',
+                    'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                ])
+                ->maxSize(10240)
+                ->storeFileNamesIn('cv_original_name')
+                ->helperText('PDF أو DOC أو DOCX - الحد الأقصى 10 MB')
+                ->columnSpanFull(),
+
+            Select::make('cv_analysis_status')
+                ->label('حالة تحليل السيرة الذاتية')
+                ->options([
+                    'not_analyzed' => 'لم يتم التحليل',
+                    'processing' => 'جاري التحليل',
+                    'completed' => 'تم التحليل',
+                    'failed' => 'فشل التحليل',
+                ])
+                ->default('not_analyzed')
+                ->disabled()
+                ->dehydrated(false),
+
+            Textarea::make('notes')
                     ->label('ملاحظات')
                     ->rows(4)
                     ->columnSpanFull(),

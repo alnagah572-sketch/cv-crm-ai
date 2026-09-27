@@ -17,9 +17,16 @@ class Customer extends Model
         'price',
         'status',
         'notes',
+        'cv_path',
+        'cv_original_name',
+        'cv_analysis_status',
+        'cv_analyzed_at',
+        'cv_ai_data',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
+        'cv_ai_data' => 'array',
+        'cv_analyzed_at' => 'datetime',
     ];
 }
