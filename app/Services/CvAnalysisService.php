@@ -39,7 +39,7 @@ class CvAnalysisService
                 ->asJson()
                 ->timeout(180)
                 ->post('https://api.openai.com/v1/responses', [
-                    'model' => config('services.openai.model', 'gpt-5.6'),
+                    'model' => config('services.openai.model', 'gpt-5.6-sol'),
                     'store' => false,
                     'input' => [
                         [
