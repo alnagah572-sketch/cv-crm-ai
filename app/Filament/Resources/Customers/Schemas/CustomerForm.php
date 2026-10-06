@@ -16,13 +16,13 @@ class CustomerForm
             ->components([
                 TextInput::make('full_name')
                     ->label('الاسم الكامل')
-                    ->required()
+                    ->helperText('يمكن تركه فارغًا وسيتم استخراجه من السيرة الذاتية بعد الحفظ.')
                     ->maxLength(255),
 
                 TextInput::make('phone')
                     ->label('رقم الجوال')
                     ->tel()
-                    ->required()
+                    ->helperText('يمكن تركه فارغًا وسيتم استخراجه من السيرة الذاتية بعد الحفظ.')
                     ->unique(ignoreRecord: true)
                     ->maxLength(30),
 
