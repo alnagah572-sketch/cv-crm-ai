@@ -30,9 +30,44 @@ class CvAnalysisService
             'cv_analysis_status' => 'processing',
         ]);
 
+        $openAiFileId = null;
+
         try {
             $file = Storage::disk('local')->get($customer->cv_path);
             $filename = $customer->cv_original_name ?: basename($customer->cv_path);
+
+            // Upload the CV to the OpenAI Files API first.
+            // This is more reliable than sending raw base64 in input_file.file_data.
+            $uploadResponse = Http::withToken($apiKey)
+                ->acceptJson()
+                ->timeout(180)
+                ->attach('file', $file, $filename)
+                ->post('https://api.openai.com/v1/files', [
+                    'purpose' => 'user_data',
+                    'expires_after[anchor]' => 'created_at',
+                    'expires_after[seconds]' => 3600,
+                ]);
+
+            if ($uploadResponse->failed()) {
+                $message = data_get(
+                    $uploadResponse->json(),
+                    'error.message',
+                    $uploadResponse->body()
+                );
+
+                throw new RuntimeException(
+                    'OpenAI file upload failed ('
+                    . $uploadResponse->status()
+                    . '): '
+                    . $message
+                );
+            }
+
+            $openAiFileId = data_get($uploadResponse->json(), 'id');
+
+            if (blank($openAiFileId)) {
+                throw new RuntimeException('OpenAI did not return a file ID.');
+            }
 
             $response = Http::withToken($apiKey)
                 ->acceptJson()
@@ -47,8 +82,7 @@ class CvAnalysisService
                             'content' => [
                                 [
                                     'type' => 'input_file',
-                                    'filename' => $filename,
-                                    'file_data' => base64_encode($file),
+                                    'file_id' => $openAiFileId,
                                 ],
                                 [
                                     'type' => 'input_text',
@@ -117,6 +151,13 @@ PROMPT,
             ]);
 
             throw $e;
+        } finally {
+            if (filled($openAiFileId)) {
+                Http::withToken($apiKey)
+                    ->acceptJson()
+                    ->timeout(30)
+                    ->delete('https://api.openai.com/v1/files/' . $openAiFileId);
+            }
         }
     }
 
